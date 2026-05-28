@@ -339,7 +339,13 @@ def main():
         )
 
     # Run the MCP server
-    app.run()
+    # MCP_TRANSPORT=streamable-http for remote (Fly.io), default stdio for local
+    transport = os.getenv("MCP_TRANSPORT", "stdio")
+    if transport == "streamable-http":
+        port = int(os.getenv("PORT", "8000"))
+        app.run(transport="streamable-http", host="0.0.0.0", port=port)
+    else:
+        app.run()
 
 
 if __name__ == "__main__":
