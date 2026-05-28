@@ -86,6 +86,16 @@ tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
 tokenstore_base64 = os.getenv("GARMINTOKENS_BASE64") or "~/.garminconnect_base64"
 is_cn = os.getenv("GARMIN_IS_CN", "false").lower() in ("true", "1", "yes")
 
+# Bootstrap tokens from env var on container startup (for Fly.io deployments)
+_token_b64_content = os.getenv("GARMINTOKENS_BASE64_CONTENT")
+if _token_b64_content:
+    import json
+    _token_dir = os.path.expanduser(tokenstore)
+    os.makedirs(_token_dir, exist_ok=True)
+    _token_json = base64.b64decode(_token_b64_content).decode()
+    with open(os.path.join(_token_dir, "garmin_tokens.json"), "w") as _f:
+        _f.write(_token_json)
+
 
 # --- Tool filtering ---------------------------------------------------------
 # Optionally expose only a subset of tools, to reduce the context an LLM must
@@ -304,7 +314,9 @@ def main():
     activity_analysis.configure(garmin_client)
 
     # Create the MCP app, wrapped so the env-var filter can drop tools
-    app = _ToolFilter(FastMCP("Garmin Connect v1.0"), enabled_tools, disabled_tools)
+    _host = "0.0.0.0" if os.getenv("MCP_TRANSPORT") == "streamable-http" else "127.0.0.1"
+    _port = int(os.getenv("PORT", "8000"))
+    app = _ToolFilter(FastMCP("Garmin Connect v1.0", host=_host, port=_port), enabled_tools, disabled_tools)
     if enabled_tools:
         print(f"Tool filter: allowlist of {len(enabled_tools)} tool(s).", file=sys.stderr)
     elif disabled_tools:
@@ -341,11 +353,7 @@ def main():
     # Run the MCP server
     # MCP_TRANSPORT=streamable-http for remote (Fly.io), default stdio for local
     transport = os.getenv("MCP_TRANSPORT", "stdio")
-    if transport == "streamable-http":
-        port = int(os.getenv("PORT", "8000"))
-        app.run(transport="streamable-http", host="0.0.0.0", port=port)
-    else:
-        app.run()
+    app.run(transport=transport)
 
 
 if __name__ == "__main__":
