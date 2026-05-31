@@ -1,4 +1,4 @@
-app = "garmin-mcp-hector"
+app = "your-garmin-mcp"
 primary_region = "iad"
 
 [build]
