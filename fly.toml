@@ -2,6 +2,7 @@ app = "your-garmin-mcp"
 primary_region = "iad"
 
 [build]
+  dockerfile = "Dockerfile"
 
 [env]
   MCP_TRANSPORT = "streamable-http"
