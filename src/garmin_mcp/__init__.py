@@ -88,15 +88,18 @@ tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
 tokenstore_base64 = os.getenv("GARMINTOKENS_BASE64") or "~/.garminconnect_base64"
 is_cn = os.getenv("GARMIN_IS_CN", "false").lower() in ("true", "1", "yes")
 
-# Bootstrap tokens from env var on container startup (for Fly.io deployments)
+# Bootstrap tokens from env var only if no token file exists on the volume.
+# Skipping when the file exists preserves fresh tokens saved by prior runs,
+# preventing the env-var (which may be stale) from overwriting them.
 _token_b64_content = os.getenv("GARMINTOKENS_BASE64_CONTENT")
 if _token_b64_content:
-    import json
     _token_dir = os.path.expanduser(tokenstore)
-    os.makedirs(_token_dir, exist_ok=True)
-    _token_json = base64.b64decode(_token_b64_content).decode()
-    with open(os.path.join(_token_dir, "garmin_tokens.json"), "w") as _f:
-        _f.write(_token_json)
+    _token_file = os.path.join(_token_dir, "garmin_tokens.json")
+    if not os.path.exists(_token_file):
+        os.makedirs(_token_dir, exist_ok=True)
+        _token_json = base64.b64decode(_token_b64_content).decode()
+        with open(_token_file, "w") as _f:
+            _f.write(_token_json)
 
 
 # --- Tool filtering ---------------------------------------------------------
