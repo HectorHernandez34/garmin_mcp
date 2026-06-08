@@ -104,4 +104,19 @@ def register_tools(app):
         """Get list of athletes who kudos'd a specific activity."""
         return _get(f"/activities/{activity_id}/kudos")
 
+    @app.tool()
+    def get_strava_activity_comments(activity_id: int, per_page: int = 30) -> list:
+        """Get comments on a specific Strava activity."""
+        return _get(f"/activities/{activity_id}/comments", {"per_page": per_page})
+
+    @app.tool()
+    def get_strava_latest_activity_comments() -> dict:
+        """Get the most recent activity and its comments."""
+        activities = _get("/athlete/activities", {"per_page": 1})
+        if not activities:
+            return {"error": "No activities found"}
+        latest = activities[0]
+        comments = _get(f"/activities/{latest['id']}/comments", {"per_page": 10})
+        return {"activity": latest.get("name"), "date": latest.get("start_date_local"), "comments": comments}
+
     return app
