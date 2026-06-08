@@ -154,11 +154,13 @@ fly secrets set \
 # Set Oura token (optional)
 fly secrets set OURA_ACCESS_TOKEN=your_oura_token --app your-garmin-mcp
 
-# Update fly.toml app name, then deploy
+# Update fly.toml — set your app name on line 1, then deploy
 fly deploy --app your-garmin-mcp
 ```
 
 Your server will be live at `https://your-garmin-mcp.fly.dev/mcp`.
+
+> **Important — avoid charges:** The `fly.toml` in this repo is already configured with `auto_stop_machines = "stop"` and `min_machines_running = 0`. This means the server sleeps when not in use and wakes up automatically when Claude connects (~5 second cold start). Do **not** change these to `false`/`1` or the machine will run 24/7 and generate charges.
 
 ---
 
