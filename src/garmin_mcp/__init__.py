@@ -28,6 +28,8 @@ from garmin_mcp import nutrition
 from garmin_mcp import workout_builders
 from garmin_mcp import courses
 from garmin_mcp import activity_analysis
+from garmin_mcp import strava
+from garmin_mcp import oura
 
 
 def is_interactive_terminal() -> bool:
@@ -313,10 +315,14 @@ def main():
     courses.configure(garmin_client)
     activity_analysis.configure(garmin_client)
 
+    # Configure Strava and Oura (credentials from env vars)
+    strava.configure()
+    oura.configure()
+
     # Create the MCP app, wrapped so the env-var filter can drop tools
     _host = "0.0.0.0" if os.getenv("MCP_TRANSPORT") == "streamable-http" else "127.0.0.1"
     _port = int(os.getenv("PORT", "8000"))
-    app = _ToolFilter(FastMCP("Garmin Connect v1.0", host=_host, port=_port), enabled_tools, disabled_tools)
+    app = _ToolFilter(FastMCP("Health MCP v1.0 (Garmin + Strava + Oura)", host=_host, port=_port), enabled_tools, disabled_tools)
     if enabled_tools:
         print(f"Tool filter: allowlist of {len(enabled_tools)} tool(s).", file=sys.stderr)
     elif disabled_tools:
@@ -338,6 +344,8 @@ def main():
     app = workout_builders.register_tools(app)
     app = courses.register_tools(app)
     app = activity_analysis.register_tools(app)
+    app = strava.register_tools(app)
+    app = oura.register_tools(app)
 
     # Register resources (workout templates)
     app = workout_templates.register_resources(app)
